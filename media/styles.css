@@ -1,0 +1,457 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  width: 100%;
+  overflow: visible;
+  background-color: var(--vscode-terminal-background, var(--vscode-editor-background, #1e1e1e));
+  font-family: var(--vscode-editor-font-family, 'SF Mono', Monaco, Menlo, 'Courier New', monospace);
+  display: flex;
+  flex-direction: row;
+}
+
+/* Terminal plus its status line form the left column; the tab bar stays beside them,
+   so the status line is exactly as wide as the terminal and never runs under the tabs */
+#terminal-column {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Terminals container - takes most of the space */
+#terminals-container {
+  flex: 1;
+  /* Optical correction, paired with the wrapper's uneven top and bottom insets: measured, the
+     terminal sits centred either way, but the last line reads as too low without this. */
+  margin-bottom: 5px;
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+  background-color: var(--vscode-terminal-background, var(--vscode-editor-background, #1e1e1e));
+}
+
+/* Tooltip in the shape of VS Code's own hover. The `title` attribute would bring the browser's
+   tooltip instead: about a second of delay and OS styling, inconsistent with the view title bar. */
+.panel-tooltip {
+  position: fixed;
+  z-index: 1000;
+  max-width: 260px;
+  padding: 3px 8px;
+  border: 1px solid var(--vscode-editorHoverWidget-border, var(--vscode-widget-border, #454545));
+  border-radius: 3px;
+  background-color: var(--vscode-editorHoverWidget-background, #252526);
+  color: var(--vscode-editorHoverWidget-foreground, var(--vscode-foreground, #ccc));
+  box-shadow: 0 2px 8px var(--vscode-widget-shadow, rgba(0, 0, 0, 0.36));
+  font-family: var(--vscode-font-family, sans-serif);
+  font-size: var(--vscode-font-size, 12px);
+  line-height: 1.4;
+  white-space: pre-wrap;
+  pointer-events: none;
+}
+
+.panel-tooltip[hidden] {
+  display: none;
+}
+
+/* Status line at the bottom edge, fed by the statusLine script through the watcher */
+#status-line {
+  /* One source for the vertical rhythm: the gap between rows, and the distance from the editor
+     row's rule to the text on either side of it. Set it in one place or the halves drift apart —
+     which is how the lower rows ended up at 1px while the top one had 2px and a border. */
+  --status-row-gap: 4px;
+
+  flex-shrink: 0;
+  padding: 4px 8px 6px;
+  background-color: var(--vscode-tab-inactiveBackground, #2d2d2d);
+  border-top: 1px solid var(--vscode-tab-border, #3c3c3c);
+  color: var(--vscode-descriptionForeground, #9d9d9d);
+  font-family: var(--vscode-font-family, sans-serif);
+  font-size: 10px;
+  line-height: 1.45;
+  display: flex;
+  flex-direction: column;
+  gap: var(--status-row-gap);
+  cursor: default;
+  user-select: none;
+}
+
+#status-line[hidden] {
+  display: none;
+}
+
+/* A snapshot older than a minute means Claude has not re-rendered since — say so quietly.
+
+   Per row, not on the whole element: `opacity` dims children beyond rescue, and two rows are not
+   stale at all. The editor row comes from VS Code, and the limits row recomputes its countdown
+   from an absolute reset point — that line is at its most useful exactly when Claude has stopped
+   rendering, because the limit is spent. Dimming it then would hide the one number still true. */
+#status-line.stale .status-row:not(.secondary):not(.editor) {
+  opacity: 0.55;
+}
+
+.status-row {
+  display: flex;
+  align-items: center;
+  /* The panel is resizable and narrow by nature, so a row that cannot wrap gets cut off at the
+     right edge instead. Items wrap; the text inside each one still does not, or a label would
+     break in the middle of "Session 70% · 84 min". */
+  flex-wrap: wrap;
+  column-gap: 6px;
+  /* A wrapped line is a line like any other — same rhythm as the gap between rows */
+  row-gap: var(--status-row-gap);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.status-model {
+  color: var(--vscode-foreground, #ccc);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+/* The track must not use `opacity`: it would dim the fill inside it as well, which is why
+   the bar looked empty. Own colour instead. */
+.status-bar {
+  flex: 1;
+  min-width: 24px;
+  height: 4px;
+  border-radius: 2px;
+  background-color: var(--vscode-scrollbarSlider-background, rgba(255, 255, 255, 0.18));
+  position: relative;
+  overflow: hidden;
+}
+
+.status-bar-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  min-width: 2px;
+  border-radius: 2px;
+  background-color: var(--vscode-progressBar-background, #0e70c0);
+}
+
+/* Same threshold the script uses for its macOS notification */
+.status-bar.warn .status-bar-fill {
+  background-color: var(--vscode-editorWarning-foreground, #cca700);
+}
+
+/* Past 80% the remaining context is small enough that it is worth acting on */
+.status-bar.danger .status-bar-fill {
+  background-color: var(--vscode-editorError-foreground, #f14c4c);
+}
+
+.status-value {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.status-value.warn {
+  color: var(--vscode-editorWarning-foreground, #cca700);
+}
+
+.status-value.danger {
+  color: var(--vscode-editorError-foreground, #f14c4c);
+}
+
+.status-row.secondary {
+  /* Column only: the row gap stays the shared one, so wrapped lines line up with real rows */
+  column-gap: 10px;
+  opacity: 0.85;
+}
+
+/* The session limit is the live one and stays on the left; compactions and the weekly limit are
+   reference numbers and sit against the right edge. Carried by the first of them alone. */
+.status-row.secondary .status-value.trailing {
+  margin-left: auto;
+}
+
+.status-effort {
+  flex-shrink: 0;
+  padding: 0 4px;
+  border-radius: 3px;
+  background-color: var(--vscode-badge-background, #4d4d4d);
+  color: var(--vscode-badge-foreground, #fff);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* The open file, at the top edge — closest to the editor it describes. It is the one row that
+   does something when clicked, so it has to read as clickable rather than as label text. */
+.status-row.editor {
+  border-bottom: 1px solid var(--vscode-tab-border, #3c3c3c);
+  /* No margin: the container's gap already sits below the rule. Only the distance above it is
+     this row's business, and it uses the same value, so the rule is centred in its own space. */
+  padding-bottom: var(--status-row-gap);
+}
+
+.status-editor {
+  /* A button, for the keyboard and the accessibility tree; the panel's own look, not the OS one */
+  appearance: none;
+  border: none;
+  background: none;
+  padding: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: inherit;
+  color: var(--vscode-foreground, #ccc);
+  cursor: pointer;
+}
+
+.status-editor:hover {
+  color: var(--vscode-textLink-activeForeground, #4daafc);
+  text-decoration: underline;
+}
+
+.status-editor:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder, #0078d4);
+  outline-offset: 1px;
+}
+
+/* Working directory last: least urgent, and the only part that can get long */
+.status-row.cwd {
+  opacity: 0.7;
+}
+
+.status-cwd {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Vertical tab bar on the right */
+#tab-bar {
+  display: flex;
+  flex-direction: column;
+  width: 36px;
+  background-color: var(--vscode-tab-inactiveBackground, #2d2d2d);
+  border-left: 1px solid var(--vscode-tab-border, #3c3c3c);
+  overflow-y: auto;
+  overflow-x: visible;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 100;
+}
+
+#tab-bar::-webkit-scrollbar {
+  width: 3px;
+}
+
+#tab-bar::-webkit-scrollbar-thumb {
+  background: var(--vscode-scrollbarSlider-background, #424242);
+}
+
+/* Individual tab - fills tab-bar width */
+.tab {
+  display: flex;
+  align-items: center;
+  justify-content: start;
+  width: 100%;
+  height: 28px;
+  background-color: var(--vscode-tab-inactiveBackground, #2d2d2d);
+  border-bottom: 1px solid var(--vscode-tab-border, #3c3c3c);
+  border-left: 2px solid transparent;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--vscode-tab-inactiveForeground, #8c8c8c);
+  position: relative;
+  flex-shrink: 0;
+  transition:
+    background-color 0.1s ease,
+    border-left-color 0.1s ease;
+  overflow: hidden;
+}
+
+.tab:hover {
+  background-color: var(--vscode-tab-hoverBackground, #383838);
+}
+
+/* Active tab without accent color uses default focus border */
+.tab.active {
+  background-color: var(--vscode-tab-activeBackground, #1e1e1e);
+  color: var(--vscode-tab-activeForeground, #ffffff);
+  border-left-color: var(--vscode-focusBorder, #007acc);
+}
+
+/* Inactive tabs with accent color show it at reduced opacity */
+.tab[data-accent]:not(.active) {
+  opacity: 0.4;
+}
+
+/* Active tabs with accent color use full opacity (border color set inline) */
+.tab[data-accent].active {
+  opacity: 1;
+}
+
+.tab-name {
+  display: block;
+  text-align: center;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+/* Tab close button - red block on right side */
+.tab-close {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  padding: 0;
+  margin: 0;
+  background-color: #ff5555;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+  transition: width 0.1s ease;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.tab-close svg {
+  display: none;
+}
+
+.tab:hover .tab-close {
+  width: 8px;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.tab-close:hover {
+  width: 10px;
+  background-color: #ff3333;
+}
+
+/* Add tab button */
+.tab-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 28px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--vscode-tab-border, #3c3c3c);
+  color: var(--vscode-icon-foreground, #c5c5c5);
+  cursor: pointer;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.tab-add:hover {
+  background-color: var(--vscode-toolbar-hoverBackground, #383838);
+}
+
+/* Terminal wrapper */
+/* Breathing room on all four sides. The wrapper carries the terminal background itself, so the
+   inset reads as part of the terminal instead of showing the page behind it as a frame.
+
+   Inset, not padding: FitAddon reads `getComputedStyle(parent).height`, which is the content box,
+   so padding here would silently shrink the terminal instead of framing it. Same air, one less
+   thing to reason about.
+
+   Top and bottom are not the same number on purpose. Measured they are symmetric either way; by
+   eye the last line still sat too low, so the top carries the correction. */
+.terminal-wrapper {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  bottom: 6px;
+  padding: 0;
+  background-color: var(--vscode-terminal-background, var(--vscode-editor-background, #1e1e1e));
+  /* Rows are whole pixels, the wrapper's height is not, so up to one row of slack is left over.
+     Centring splits it evenly instead of letting all of it collect under the last line, which is
+     what made the gap below the mode line jump around as the panel was resized. */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* `height: auto` on purpose — the element has to shrink to the rows FitAddon actually laid out,
+   or centring has nothing to centre. FitAddon measures the wrapper, not this, so it is unaffected. */
+.terminal-wrapper .xterm {
+  height: auto;
+}
+
+/* xterm.css paints the viewport #000 so macOS scrollbars stay opaque (xterm.css:93). xterm
+   colours the cells from its theme, not that surface — so the strip FitAddon leaves below the
+   last row showed as a black band above the status line. */
+.terminal-wrapper .xterm-viewport {
+  background-color: var(--vscode-terminal-background, var(--vscode-editor-background, #1e1e1e));
+}
+
+/* xterm 6.0.0 handles viewport scrolling internally */
+
+/* Scrollbar styling - override xterm's overlay scrollbar */
+.terminal-wrapper .xterm .scrollbar.vertical {
+  width: 6px !important;
+}
+
+.terminal-wrapper .xterm .scrollbar.vertical .slider {
+  width: 6px !important;
+}
+
+.terminal-wrapper .xterm-viewport::-webkit-scrollbar {
+  width: 6px;
+}
+
+.terminal-wrapper .xterm-viewport::-webkit-scrollbar-track {
+  background: var(--vscode-terminal-background, var(--vscode-editor-background, #1e1e1e));
+}
+
+.terminal-wrapper .xterm-viewport::-webkit-scrollbar-thumb {
+  background: var(--vscode-scrollbarSlider-background, #424242);
+  border-radius: 3px;
+}
+
+.terminal-wrapper .xterm-viewport::-webkit-scrollbar-thumb:hover {
+  background: var(--vscode-scrollbarSlider-hoverBackground, #4f4f4f);
+}
+
+/* Selection styling */
+.xterm .xterm-selection div {
+  background-color: var(--vscode-terminal-selectionBackground, rgba(38, 79, 120, 0.5)) !important;
+}
+
+/* Notification pill for waiting input */
+.notification-pill {
+  position: absolute;
+  top: 1px;
+  left: 0px;
+  width: 4px;
+  height: 4px;
+  background-color: var(--vscode-notificationsErrorIcon-foreground, #f14c4c);
+  border-radius: 50%;
+  box-shadow: 0 0 4px rgba(241, 76, 76, 0.5);
+  animation: pulse-notification 2s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 10;
+}
+
+@keyframes pulse-notification {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(0.9);
+  }
+}
+
+/* Hide notification pill on active tab */
+.tab.active .notification-pill {
+  display: none;
+}

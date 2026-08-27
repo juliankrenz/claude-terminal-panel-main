@@ -1,0 +1,386 @@
+# Claude Terminal Panel
+
+[![Install in VS Code](https://img.shields.io/badge/Install%20in%20VS%20Code-Open-blue?style=for-the-badge&logo=visualstudiocode)](https://marketplace.visualstudio.com/items?itemName=0ly.claude-terminal-panel)
+[![Download VSIX](https://img.shields.io/github/v/release/nolikzero/claude-terminal-panel?style=for-the-badge&label=VSIX&color=green)](https://github.com/nolikzero/claude-terminal-panel/releases/latest)
+
+[![VS Code](https://img.shields.io/badge/VS%20Code-1.106%2B-blue?logo=visualstudiocode)](https://code.visualstudio.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Version](https://img.shields.io/github/v/release/nolikzero/claude-terminal-panel?label=version&color=green)](https://github.com/nolikzero/claude-terminal-panel/releases/latest)
+
+> A dedicated terminal in the secondary sidebar for running AI coding assistants
+
+Run **Claude Code**, **Gemini CLI**, **OpenAI Codex**, **Aider**, **OpenCode** and any other AI CLI tool directly from your VS Code sidebar.
+
+![Claude Terminal Panel Screenshot](media/screenshot_2.png)
+
+## Features
+
+- **Dedicated Sidebar Terminal** - Run any AI CLI tool directly from VS Code's secondary sidebar, always accessible while you code
+- **Multi-Tab Support** - Run multiple terminal instances simultaneously with keyboard shortcuts for quick navigation
+- **Prompt Notifications** - Visual indicator (pulsing red dot) when the terminal is waiting for your input
+- **Native Status Line** - Claude's model, context usage, rate limits and working directory rendered at the bottom edge of the panel instead of as text in the scrollback
+- **Resume Sessions in Place** - Continue or pick an earlier session in the current tab, without piling up new tabs
+- **Editor Context** - The file you are looking at sits above the status line; one click puts the code you selected into the prompt
+- **Custom Commands** - Create new terminals with custom commands, intelligent flag suggestions from `--help`
+- **Working Directory Selection** - Choose which workspace folder to use when creating new terminals
+- **Tab Accent Colors** - Color-coded tabs per workspace folder for easy identification in multi-root workspaces
+- **Works with Any AI Tool** - Claude Code, Gemini CLI, OpenAI Codex, Aider, and more
+- **VS Code Theme Integration** - Full 256-color support with automatic theme synchronization
+- **Dual Execution Modes** - Choose between direct mode (cleaner output) or shell mode (full shell features)
+- **Auto-run on Startup** - Optionally start your AI assistant automatically when VS Code opens
+- **Fully Configurable** - Customize the command, arguments, shell, and environment variables
+- **Quick Actions** - Restart the terminal with a single click
+
+## Requirements
+
+- **VS Code** 1.106.0 or higher
+- **An AI CLI tool** installed and accessible in your PATH (see [Supported Tools](#supported-tools))
+- **Node.js** - Required for native module compilation
+
+## Supported Tools
+
+This extension works with any command-line AI assistant. Here are some popular options with installation instructions and additional top CLI AI coding agents, including OpenCode:
+
+| Tool                                                                    | Command       | Installation                               |
+| ----------------------------------------------------------------------- | ------------- | ------------------------------------------ |
+| [Claude Code](https://github.com/anthropics/claude-code)                | `claude`      | `npm install -g @anthropic-ai/claude-code` |
+| [Gemini CLI](https://github.com/google-gemini/gemini-cli)               | `gemini`      | `npm install -g @google/gemini-cli`        |
+| [Aider](https://aider.chat)                                             | `aider`       | `pip install aider-chat`                   |
+| [Codex CLI](https://github.com/openai/codex)                            | `codex`       | `npm install -g @openai/codex`             |
+| [GitHub Copilot CLI](https://githubnext.com/projects/copilot-cli)       | `gh copilot`  | `gh extension install github/gh-copilot`   |
+| [Open Interpreter](https://github.com/openinterpreter/open-interpreter) | `interpreter` | `pip install open-interpreter`             |
+| [OpenCode](https://github.com/opencode-ai/opencode)                     | `opencode`    | `brew install opencode-ai/tap/opencode`    |
+| Any CLI tool                                                            | Custom        | Configure via settings                     |
+
+## Installation
+
+### From VS Code Marketplace
+
+1. Open VS Code
+2. Go to Extensions (`Cmd+Shift+X` / `Ctrl+Shift+X`)
+3. Search for "Claude Terminal Panel"
+4. Click Install
+
+### From VSIX File
+
+1. Download the `.vsix` file from the [Releases](../../releases) page
+2. Open VS Code
+3. Run `Extensions: Install from VSIX...` from the Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`)
+4. Select the downloaded `.vsix` file
+
+### Build from Source
+
+```bash
+# Clone the repository
+git clone https://github.com/nolikzero/claude-terminal-panel.git
+cd claude-terminal-panel
+
+# Install dependencies
+npm install
+
+# Build the extension
+npm run compile
+
+# Package the extension
+npm run package
+```
+
+## Usage
+
+1. **Open the Sidebar** - Click the Claude icon in the activity bar (secondary sidebar)
+2. **Interact with your AI** - Type your prompts and interact with your AI assistant directly in the terminal
+3. **Use Quick Actions** - Click the restart icon in the view title bar, or use the + button to add new tabs
+
+### Commands
+
+| Command                                                     | Description                                               |
+| ----------------------------------------------------------- | --------------------------------------------------------- |
+| `Claude Terminal: Restart Terminal`                         | Restart the terminal session in the tab's own directory   |
+| `Claude Terminal: New Terminal Tab`                         | Create a new terminal tab                                 |
+| `Claude Terminal: Resume Session in Current Tab…`           | Restart the active tab with `--resume` and pick a session |
+| `Claude Terminal: Continue Last Session in Current Tab`     | Restart the active tab with `--continue`                  |
+| `Claude Terminal: New Terminal Tab (Resume Session…)`       | Open an additional tab with `--resume`                    |
+| `Claude Terminal: New Terminal Tab (Continue Last Session)` | Open an additional tab with `--continue`                  |
+| `Claude Terminal: Close Terminal Tab`                       | Close the current terminal tab                            |
+| `Claude Terminal: Next Terminal Tab`                        | Switch to the next tab                                    |
+| `Claude Terminal: Previous Terminal Tab`                    | Switch to the previous tab                                |
+| `Claude Terminal: Add Editor Selection to Prompt`           | Put the selected code, or the open file, into the prompt  |
+
+The four session commands only make sense for Claude Code. Claude stores its history per working
+directory, so which sessions you get depends on the tab's directory — visible in the tab tooltip.
+
+Access commands via the Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`) or the view title bar icons.
+
+### Keyboard Shortcuts
+
+| Action                  | Windows/Linux   | macOS           |
+| ----------------------- | --------------- | --------------- |
+| New Tab                 | `Ctrl+Shift+``  | `Cmd+Shift+``   |
+| Close Tab               | `Ctrl+W`        | `Cmd+W`         |
+| Next Tab                | `Ctrl+PageDown` | `Cmd+Opt+Right` |
+| Previous Tab            | `Ctrl+PageUp`   | `Cmd+Opt+Left`  |
+| Add Selection to Prompt | `Ctrl+Alt+K`    | `Cmd+Opt+K`     |
+
+## Configuration
+
+Configure the extension via VS Code Settings (`Cmd+,` / `Ctrl+,`):
+
+| Setting                                  | Type    | Default    | Description                                                                                        |
+| ---------------------------------------- | ------- | ---------- | -------------------------------------------------------------------------------------------------- |
+| `claudeTerminal.command`                 | string  | `"claude"` | The command to run in the terminal                                                                 |
+| `claudeTerminal.args`                    | array   | `[]`       | Arguments to pass to the command                                                                   |
+| `claudeTerminal.autoRun`                 | boolean | `true`     | Automatically run the command when the terminal opens                                              |
+| `claudeTerminal.shell`                   | string  | `""`       | Custom shell to use (empty for system default)                                                     |
+| `claudeTerminal.cwd`                     | string  | `""`       | Fixed working directory, `~` allowed (empty for the first workspace folder)                        |
+| `claudeTerminal.env`                     | object  | `{}`       | Additional environment variables                                                                   |
+| `claudeTerminal.preloadHelp`             | boolean | `false`    | Probe other CLI agents for `--help` output on startup                                              |
+| `claudeTerminal.statusLine`              | boolean | `true`     | Render Claude's status line at the bottom of the panel                                             |
+| `claudeTerminal.statusLineProvider`      | string  | `bundled`  | `bundled` uses the shipped producer, `own` expects your own `statusLine` command to write the data |
+| `claudeTerminal.statusLineCompactBudget` | number  | `0`        | Target number of compactions shown as `Compacted 1/3`; `0` shows the count alone                   |
+| `claudeTerminal.editorContext`           | boolean | `true`     | Show the open file above the status line; the command works either way                             |
+| `claudeTerminal.directMode`              | boolean | `true`     | Run command directly without shell wrapper                                                         |
+| `claudeTerminal.promptNotification`      | boolean | `true`     | Show notification indicator when terminal awaits input                                             |
+| `claudeTerminal.promptNotificationDelay` | number  | `300`      | Delay (ms) before showing notification after output stops                                          |
+| `claudeTerminal.promptPatterns`          | array   | `[]`       | Additional regex patterns to detect input prompts                                                  |
+
+### Configuration Examples
+
+**Claude Code (default):**
+
+```json
+{
+  "claudeTerminal.command": "claude",
+  "claudeTerminal.args": []
+}
+```
+
+**Gemini CLI:**
+
+```json
+{
+  "claudeTerminal.command": "gemini",
+  "claudeTerminal.args": []
+}
+```
+
+**Aider:**
+
+```json
+{
+  "claudeTerminal.command": "aider",
+  "claudeTerminal.args": ["--model", "gpt-4"]
+}
+```
+
+**OpenAI Codex:**
+
+```json
+{
+  "claudeTerminal.command": "codex",
+  "claudeTerminal.args": []
+}
+```
+
+**GitHub Copilot CLI:**
+
+```json
+{
+  "claudeTerminal.command": "gh",
+  "claudeTerminal.args": ["copilot"]
+}
+```
+
+**Running with shell features:**
+
+```json
+{
+  "claudeTerminal.directMode": false,
+  "claudeTerminal.shell": "/bin/zsh"
+}
+```
+
+**Adding environment variables:**
+
+```json
+{
+  "claudeTerminal.env": {
+    "ANTHROPIC_API_KEY": "your-api-key",
+    "OPENAI_API_KEY": "your-openai-key"
+  }
+}
+```
+
+## Prompt Notifications
+
+The extension can detect when the terminal is waiting for user input and show a visual notification (pulsing red dot) on the tab. This helps you notice when your AI assistant needs attention, even when you're working in another part of VS Code.
+
+### Built-in Detection Patterns
+
+The extension automatically detects common prompt patterns:
+
+- **Yes/No prompts**: `[Y/n]`, `(y/n)`, `[yes/no]`
+- **Confirmation prompts**: `Confirm?`, `Continue?`, `Accept?`, `Proceed?`, `Apply?`
+- **Interactive menus**: `❯`, `›`, numbered selections
+- **REPL prompts**: `>`, `>>>`, `command>`
+- **Claude Code hints**: Plan file prompts, "Would you like to" questions
+- **General prompts**: "Press enter to confirm", "Esc to cancel"
+
+### Custom Prompt Patterns
+
+If your AI tool uses custom prompts not detected by default, you can add your own regex patterns:
+
+```json
+{
+  "claudeTerminal.promptPatterns": ["^mybot> $", "\\[waiting\\]", "^Input: $"]
+}
+```
+
+### Disabling Notifications
+
+To disable prompt notifications entirely:
+
+```json
+{
+  "claudeTerminal.promptNotification": false
+}
+```
+
+## Status Line
+
+For Claude Code tabs, the panel draws a status row at its bottom edge: model and effort, a context
+bar with percentage and token count, the five-hour and weekly rate limits with their reset points,
+the compaction counter, and the working directory.
+
+It works without any setup. The data cannot be read from the terminal stream — Claude Code hands
+model, token counts and rate limits only to the configured `statusLine` command — so the extension
+ships a small producer and passes it to Claude per session via `--settings`. Nothing in
+`~/.claude/settings.json` is changed, and the injection applies inside the panel only.
+
+If you already have a `statusLine` command, it is not lost: the bundled producer runs it
+afterwards with the same input, so its side effects still happen, while its text output is dropped
+in favour of the native row. Set `claudeTerminal.statusLineProvider` to `own` if your script writes
+the panel snapshot itself, or `claudeTerminal.statusLine` to `false` to switch the whole thing off.
+
+Notes:
+
+- The row updates when Claude re-renders its status line; a value older than a minute is greyed
+  out.
+- Tabs running something other than Claude Code have no status row.
+- Claude's own colours (diff blocks and highlights) follow its `theme` setting, not the VS Code
+  theme. On a light theme, pick a light theme in Claude too with `/theme`.
+
+## Editor Context
+
+Above the status line sits the file the editor is showing — `main.ts`, or `main.ts:120-134` when
+you have code selected. The panel is next to your editor, so it may as well say what the editor is
+looking at.
+
+Clicking that row, or pressing `Cmd+Opt+K` / `Ctrl+Alt+K`, puts it into Claude's prompt:
+
+- **With a selection**, the selected code goes in as a fenced block headed by `path:lines`.
+- **Without one**, an at-mention of the file: `@src/main.ts`.
+
+The difference matters more than it looks. An at-mention makes Claude read the entire file, and the
+line numbers in it are only prose — measured on a 270-line file, 7422 bytes arrived for 120 bytes of
+selection. Sending the selected lines sends the lines you meant; if Claude needs the rest, it can
+read the file itself. Selections beyond 8000 characters fall back to the mention, where the file
+reference is both smaller and easier to read than the quoted block.
+
+The text is inserted, never submitted, and the caret moves to the terminal with it — the shortcut is
+pressed with the focus in your editor, so without that the next thing you type would land in the
+file you were just pointing at.
+
+Notes:
+
+- Nothing is attached automatically. Context leaves the editor only when you ask for it.
+- Images, PDFs and other non-text editors are named too, but there is no selection to quote in them.
+- `claudeTerminal.editorContext` hides the row; the command and its shortcut keep working.
+
+## Custom Commands
+
+Click the CLI icon button (next to the + button) in the tab bar to create a terminal with a custom command instead of the default.
+
+### Command Input
+
+When creating a custom terminal, you'll be prompted to enter:
+
+1. **Command**: The CLI tool to run (e.g., `aider`, `gemini`, `opencode`)
+2. **Arguments**: Additional flags and options
+
+### Intelligent Flag Suggestions
+
+As you type, the extension fetches available flags from the command's `--help` output and suggests them. This works with most CLI tools including:
+
+- Claude Code
+- Gemini CLI
+- Aider
+- OpenCode
+- And any tool that supports `--help`
+
+### Working Directory Selection
+
+In multi-root workspaces, you'll be prompted to select which folder the terminal should start in. Each folder gets a unique accent color on its tab for easy identification.
+
+## Development
+
+### Prerequisites
+
+- Node.js 18+
+- npm
+
+### Setup
+
+```bash
+# Install dependencies
+npm install
+
+# Compile TypeScript
+npm run compile
+
+# Watch for changes
+npm run watch
+```
+
+### Running in Debug Mode
+
+1. Open this project in VS Code
+2. Press `F5` to launch the Extension Development Host
+3. The extension will be active in the new VS Code window
+
+### Available Scripts
+
+| Script             | Description                |
+| ------------------ | -------------------------- |
+| `npm run compile`  | Compile the extension      |
+| `npm run watch`    | Watch mode for development |
+| `npm run lint`     | Run ESLint                 |
+| `npm run lint:fix` | Fix ESLint issues          |
+| `npm run format`   | Format code with Prettier  |
+| `npm run package`  | Create VSIX package        |
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+For bugs and feature requests, please [open an issue](../../issues).
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- [xterm.js](https://xtermjs.org/) - The terminal emulator powering the UI
+- [node-pty](https://github.com/microsoft/node-pty) - Native pseudoterminal support
+
+---
+
+<p align="center">
+  Made with care for the AI-assisted development community
+</p>

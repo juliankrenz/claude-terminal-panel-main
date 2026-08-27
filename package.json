@@ -1,0 +1,323 @@
+{
+  "name": "claude-terminal-panel-local",
+  "displayName": "Claude Terminal Panel (local)",
+  "description": "A dedicated terminal in the secondary panel for running Claude Code",
+  "version": "1.1.0",
+  "publisher": "local",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nolikzero/claude-terminal-panel"
+  },
+  "bugs": {
+    "url": "https://github.com/nolikzero/claude-terminal-panel/issues"
+  },
+  "homepage": "https://github.com/nolikzero/claude-terminal-panel#readme",
+  "engines": {
+    "vscode": "^1.106.0"
+  },
+  "keywords": [
+    "claude",
+    "ai",
+    "terminal",
+    "sidebar",
+    "claude-code",
+    "gemini",
+    "aider",
+    "cli",
+    "assistant"
+  ],
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "secondarySidebar": [
+        {
+          "id": "claudeTerminalContainer",
+          "title": "Claude Terminal",
+          "icon": "$(terminal)"
+        }
+      ]
+    },
+    "views": {
+      "claudeTerminalContainer": [
+        {
+          "type": "webview",
+          "id": "claudeTerminal.terminalView",
+          "name": "Terminal",
+          "visibility": "visible"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "claudeTerminal.restart",
+        "title": "Restart Terminal",
+        "category": "Claude Terminal",
+        "icon": "$(debug-restart)"
+      },
+      {
+        "command": "claudeTerminal.newTab",
+        "title": "New Terminal Tab",
+        "category": "Claude Terminal",
+        "icon": "$(add)"
+      },
+      {
+        "command": "claudeTerminal.newTabContinue",
+        "title": "New Terminal Tab (Continue Last Session)",
+        "category": "Claude Terminal",
+        "icon": "$(debug-continue)"
+      },
+      {
+        "command": "claudeTerminal.newTabResume",
+        "title": "New Terminal Tab (Resume Session…)",
+        "category": "Claude Terminal",
+        "icon": "$(history)"
+      },
+      {
+        "command": "claudeTerminal.resumeSession",
+        "title": "Resume Session in Current Tab…",
+        "category": "Claude Terminal",
+        "icon": "$(history)"
+      },
+      {
+        "command": "claudeTerminal.continueSession",
+        "title": "Continue Last Session in Current Tab",
+        "category": "Claude Terminal",
+        "icon": "$(debug-continue)"
+      },
+      {
+        "command": "claudeTerminal.closeTab",
+        "title": "Close Terminal Tab",
+        "category": "Claude Terminal",
+        "icon": "$(close)"
+      },
+      {
+        "command": "claudeTerminal.nextTab",
+        "title": "Next Terminal Tab",
+        "category": "Claude Terminal"
+      },
+      {
+        "command": "claudeTerminal.previousTab",
+        "title": "Previous Terminal Tab",
+        "category": "Claude Terminal"
+      },
+      {
+        "command": "claudeTerminal.insertEditorReference",
+        "title": "Add Editor Selection to Prompt",
+        "category": "Claude Terminal",
+        "icon": "$(add)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "claudeTerminal.newTab",
+        "key": "ctrl+shift+`",
+        "mac": "cmd+shift+`",
+        "when": "focusedView == 'claudeTerminal.terminalView'"
+      },
+      {
+        "command": "claudeTerminal.nextTab",
+        "key": "ctrl+pagedown",
+        "mac": "cmd+alt+right",
+        "when": "focusedView == 'claudeTerminal.terminalView'"
+      },
+      {
+        "command": "claudeTerminal.previousTab",
+        "key": "ctrl+pageup",
+        "mac": "cmd+alt+left",
+        "when": "focusedView == 'claudeTerminal.terminalView'"
+      },
+      {
+        "command": "claudeTerminal.closeTab",
+        "key": "ctrl+w",
+        "mac": "cmd+w",
+        "when": "focusedView == 'claudeTerminal.terminalView'"
+      },
+      {
+        "command": "claudeTerminal.insertEditorReference",
+        "key": "ctrl+alt+k",
+        "mac": "cmd+alt+k"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "claudeTerminal.newTab",
+          "when": "view == claudeTerminal.terminalView",
+          "group": "navigation@1"
+        },
+        {
+          "command": "claudeTerminal.resumeSession",
+          "when": "view == claudeTerminal.terminalView",
+          "group": "navigation@2"
+        },
+        {
+          "command": "claudeTerminal.continueSession",
+          "when": "view == claudeTerminal.terminalView",
+          "group": "navigation@3"
+        },
+        {
+          "command": "claudeTerminal.restart",
+          "when": "view == claudeTerminal.terminalView",
+          "group": "navigation@4"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Claude Terminal",
+      "properties": {
+        "claudeTerminal.command": {
+          "type": "string",
+          "default": "claude",
+          "description": "Command to run on terminal start"
+        },
+        "claudeTerminal.args": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Arguments to pass to the command"
+        },
+        "claudeTerminal.autoRun": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to auto-run command on start"
+        },
+        "claudeTerminal.shell": {
+          "type": "string",
+          "default": "",
+          "description": "Custom shell path (empty = system default)"
+        },
+        "claudeTerminal.cwd": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Fixed working directory for the terminal, `~` allowed (empty = first workspace folder). Claude Code stores its session history per directory, so pinning this keeps `/resume` showing the same sessions no matter which folder is open."
+        },
+        "claudeTerminal.preloadHelp": {
+          "type": "boolean",
+          "default": false,
+          "description": "On startup, probe other CLI agents (gemini, aider, codex, gh, interpreter, opencode) for their --help output. Off means only the configured command is probed."
+        },
+        "claudeTerminal.statusLine": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Render Claude's status line natively at the bottom of the panel instead of as text inside the terminal. Needs the `statusLine` command in `~/.claude/settings.json` to write its data — see README.local.md. Off means the script behaves like in any other terminal."
+        },
+        "claudeTerminal.statusLineProvider": {
+          "type": "string",
+          "enum": [
+            "bundled",
+            "own"
+          ],
+          "default": "bundled",
+          "markdownEnumDescriptions": [
+            "Pass the shipped producer to Claude through `--settings` for this session only. Nothing in `~/.claude/settings.json` is changed, and an existing `statusLine` command still runs for its side effects.",
+            "Write nothing to Claude's settings and expect your own `statusLine` command to detect `CLAUDE_PANEL_TAB_ID` and write the snapshot itself."
+          ],
+          "markdownDescription": "Where the status line data comes from. `bundled` works without any setup; `own` leaves the contract to your own script."
+        },
+        "claudeTerminal.statusLineCompactBudget": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "markdownDescription": "Target number of compactions per session, shown as `Compacted 1/3`. `0` shows the count without a budget. Only used by the bundled provider."
+        },
+        "claudeTerminal.editorContext": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Show the file open in the editor at the top of the status line, with the selected line range when there is one. Clicking the row puts the selected code into Claude's prompt as a fenced block headed by `path:lines`, or `@path` when nothing is selected — an at-mention would pull the whole file. The command `Claude Terminal: Add Editor Selection to Prompt` does the same and stays available when this is off. Nothing is ever sent without asking, and nothing is submitted: the text waits in the prompt."
+        },
+        "claudeTerminal.env": {
+          "type": "object",
+          "default": {},
+          "description": "Additional environment variables"
+        },
+        "claudeTerminal.directMode": {
+          "type": "boolean",
+          "default": true,
+          "description": "Run command directly without shell wrapper (cleaner output, but no shell features)"
+        },
+        "claudeTerminal.promptNotification": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show notification indicator on tab when terminal is waiting for user input"
+        },
+        "claudeTerminal.promptNotificationDelay": {
+          "type": "number",
+          "default": 300,
+          "minimum": 100,
+          "maximum": 2000,
+          "description": "Delay in milliseconds before showing the notification after output stops"
+        },
+        "claudeTerminal.promptPatterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Additional regex patterns to detect when terminal is waiting for input (e.g., '^mybot> $'). Built-in patterns detect most CLI AI tools automatically."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run lint && npm run compile",
+    "compile": "npm run compile:extension && npm run copy:xterm-css && npm run compile:media",
+    "compile:extension": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --external:node-pty --format=cjs --platform=node",
+    "compile:media": "esbuild media/main.ts --bundle --outfile=media/main.js --format=iife --platform=browser",
+    "copy:xterm-css": "node -e \"require('fs').copyFileSync('node_modules/@xterm/xterm/css/xterm.css', 'media/xterm.css')\"",
+    "watch": "npm run compile:extension -- --watch",
+    "prepackage": "node scripts/verify-package-payload.js --source",
+    "package": "npx @vscode/vsce package --skip-license",
+    "postpackage": "node scripts/verify-package-payload.js --vsix",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"src/**/*.ts\" \"media/**/*.{ts,css}\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"media/**/*.{ts,css}\"",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "src/**/*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "media/**/*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "media/**/*.css": [
+      "prettier --write"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@types/node": "^22.0.0",
+    "@types/vscode": "^1.106.0",
+    "@xterm/addon-fit": "^0.11.0",
+    "@xterm/addon-web-links": "^0.12.0",
+    "@xterm/xterm": "^6.0.0",
+    "esbuild": "^0.25.0",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.0.0",
+    "globals": "^16.0.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.0.0",
+    "prettier": "^3.7.4",
+    "typescript": "^5.3.0",
+    "typescript-eslint": "^8.52.0"
+  },
+  "dependencies": {
+    "node-pty": "^1.0.0"
+  }
+}
